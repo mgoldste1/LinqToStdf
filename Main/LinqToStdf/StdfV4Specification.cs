@@ -20,7 +20,8 @@ namespace LinqToStdf {
             }
 			converterFactory.RegisterRecordType(new RecordType(0, 10), typeof(Far));
 			converterFactory.RegisterRecordType(new RecordType(0, 20), typeof(Atr));
-			converterFactory.RegisterRecordType(new RecordType(1, 10), typeof(Mir));
+            converterFactory.RegisterRecordType(new RecordType(0, 30), typeof(Vur)); //V4-2007
+            converterFactory.RegisterRecordType(new RecordType(1, 10), typeof(Mir));
 			converterFactory.RegisterRecordType(new RecordType(1, 20), typeof(Mrr));
 			converterFactory.RegisterRecordType(new RecordType(1, 30), typeof(Pcr));
 			converterFactory.RegisterRecordType(new RecordType(1, 40), typeof(Hbr));
@@ -31,7 +32,8 @@ namespace LinqToStdf {
 			converterFactory.RegisterRecordUnconverter(typeof(Plr), Plr.ConvertFromPlr);
 			converterFactory.RegisterRecordType(new RecordType(1, 70), typeof(Rdr));
 			converterFactory.RegisterRecordType(new RecordType(1, 80), typeof(Sdr));
-			converterFactory.RegisterRecordType(new RecordType(2, 10), typeof(Wir));
+            converterFactory.RegisterRecordType(new RecordType(1, 90), typeof(Psr)); //V4-2007  
+            converterFactory.RegisterRecordType(new RecordType(2, 10), typeof(Wir));
 			converterFactory.RegisterRecordType(new RecordType(2, 20), typeof(Wrr));
 			converterFactory.RegisterRecordType(new RecordType(2, 30), typeof(Wcr));
 			converterFactory.RegisterRecordType(new RecordType(5, 10), typeof(Pir));

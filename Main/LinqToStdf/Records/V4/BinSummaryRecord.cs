@@ -2,32 +2,47 @@
 // This source is subject to the Microsoft Public License.
 // See http://www.microsoft.com/resources/sharedsource/licensingbasics/sharedsourcelicenses.mspx.
 // All other rights reserved.
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace LinqToStdf.Records.V4 {
+namespace LinqToStdf.Records.V4
+{
     using Attributes;
 
-    [FieldLayout(FieldIndex = 0, FieldType = typeof(byte), MissingValue = (byte)1, PersistMissingValue = true, RecordProperty = "HeadNumber"),
-    FieldLayout(FieldIndex = 1, FieldType = typeof(byte), MissingValue = (byte)1, PersistMissingValue = true, RecordProperty = "SiteNumber"),
-    FieldLayout(FieldIndex = 2, FieldType = typeof(ushort), RecordProperty = "BinNumber"),
-    FieldLayout(FieldIndex = 3, FieldType = typeof(uint), RecordProperty = "BinCount"),
-    StringFieldLayout(FieldIndex = 4, IsOptional = true, Length = 1, MissingValue = " ", RecordProperty = "BinPassFail"),
-    StringFieldLayout(FieldIndex = 5, IsOptional = true, RecordProperty = "BinName")]
+    /// <summary>
+    /// Base class for HBRs and SBRs
+    /// </summary>
+    [FieldLayout(FieldIndex = 0, FieldType = typeof(byte), MissingValue = (byte)1, PersistMissingValue = true, RecordProperty = "HeadNumber", NameInSpec = "HEAD_NUM"),
+     FieldLayout(FieldIndex = 1, FieldType = typeof(byte), MissingValue = (byte)1, PersistMissingValue = true, RecordProperty = "SiteNumber", NameInSpec = "SITE_NUM")]
     public abstract class BinSummaryRecord : StdfRecord, IHeadSiteIndexable {
+        public override string FullName { get => "BinSummaryRecord"; }
         public abstract BinType BinType { get; }
         public byte? HeadNumber { get; set; }
+
         public byte? SiteNumber { get; set; }
+
         /// <summary>
-        /// While ushort, valid bins must be 0 - 32,767
+        /// <br>Hardware bin number</br>
+        /// <br>HBIN_NUM (U*2)</br>
+        /// <br>While ushort, valid bins must be 0 - 32,767</br>
         /// </summary>
         public ushort BinNumber { get; set; }
-        public uint BinCount { get; set; }
+
         /// <summary>
-        /// Known values are P, F
+        /// <br>Number of parts in bin</br>
+        /// <br>HBIN_CNT (U*4)</br>
+        /// </summary>
+        public uint BinCount { get; set; }
+
+        /// <summary>
+        /// <br>Pass/fail indication </br>
+        /// <br>HBIN_PF (C*1)</br>
+        /// <br>Known values are P, F</br>
         /// </summary>
         public string? BinPassFail { get; set; }
+
+        /// <summary>
+        /// <br>Name of hardware bin</br>
+        /// <br>HBIN_NAM (C*n)</br>
+        /// </summary>
         public string? BinName { get; set; }
     }
 }

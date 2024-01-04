@@ -2,6 +2,7 @@
 // This source is subject to the Microsoft Public License.
 // See http://www.microsoft.com/resources/sharedsource/licensingbasics/sharedsourcelicenses.mspx.
 // All other rights reserved.
+using LinqToStdf.Records;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,9 +15,42 @@ namespace LinqToStdf {
     public abstract class StdfRecord : IRecordContext {
 
         /// <summary>
+        /// Returns the name of the record, which is set on each record.
+        /// </summary>
+        public virtual string FullName { get => "UNKNOWN"; }
+
+        public string ShortRecName
+        {
+            get
+            {
+                return this.GetType().Name;
+            }
+        }
+        /// <summary>
         /// The <see cref="RecordType"/> of the instance
         /// </summary>
         public abstract RecordType RecordType { get; }
+
+        /// <summary>
+        /// this allows you to group up on the record type without it bombing out. helpful for creating summaries of the contents in an stdf file
+        /// </summary>
+        /// <returns></returns>
+        public RecordType GetRecordType_Safe()
+        {
+            try
+            {
+                return RecordType;
+            }
+            catch
+            {
+                if (this.GetType() == typeof(StartOfStreamRecord))
+                    return new RecordType(254, 254);
+                else if (this.GetType() == typeof(EndOfStreamRecord))
+                    return new RecordType(254, 255);
+                else
+                    return new RecordType(255, 255);
+            }
+        }
 
         /// <summary>
         /// Reference to the "owning" StdfFile.

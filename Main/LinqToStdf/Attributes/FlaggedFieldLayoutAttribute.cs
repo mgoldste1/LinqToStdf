@@ -12,7 +12,8 @@ namespace LinqToStdf.Attributes {
     /// Defines an STDF field whose "null" state is set by an external bitfield byte
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = true)]
-    public class FlaggedFieldLayoutAttribute : FieldLayoutAttribute {
+    public class FlaggedFieldLayoutAttribute : FieldLayoutAttribute, IFlaggedFieldLayout
+    {
 
         public FlaggedFieldLayoutAttribute() {
             base.IsOptional = true;

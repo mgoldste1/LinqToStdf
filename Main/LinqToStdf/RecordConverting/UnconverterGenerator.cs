@@ -80,7 +80,7 @@ namespace LinqToStdf.RecordConverting
                 if (fieldType == typeof(string))
                 {
                     // TODO: Accept string arrays
-                    throw new InvalidOperationException(Resources.NoStringArrays);
+                    //throw new InvalidOperationException(Resources.NoStringArrays);
                 }
                 if (fieldType == typeof(BitArray))
                 {

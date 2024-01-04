@@ -112,7 +112,7 @@ namespace LinqToStdf.Attributes {
         /// Defines the value used to inidicate that the field is mising or invalid.
         /// </summary>
         /// <remarks>
-        /// <para>There must me a relevant relationship between the value used and the FieldType.</para>
+        /// <para>There must be a relevant relationship between the value used and the FieldType.</para>
         /// <para>The STDF specification clearly defines the concept of a value to use to
         /// represent missing or invalid data when a set of bytes must be written to an STDF file.
         /// This defines that value.  On reading an STDF file, when an optional field's value is
@@ -136,5 +136,10 @@ namespace LinqToStdf.Attributes {
         /// it is assigned to the property (as opposed to potentially being truncated).
         /// </remarks>
         public bool PersistMissingValue { get; set; }
+
+        /// <summary>
+        /// Allows you to find LinqToStdf variables based on the name of the variable in the spec
+        /// </summary>
+        public string? NameInSpec { get; set; }
     }
 }

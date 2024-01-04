@@ -58,7 +58,7 @@ namespace LinqToStdf.RecordConverting
                     if (pair.Value != null && _Fields.Contains(pair.Value.Name))
                     {
                         //if it's an optional field
-                        if (pair.Key is FlaggedFieldLayoutAttribute op)
+                        if (pair.Key is IFlaggedFieldLayout op)
                         {
                             //if the flag index is an assigned field, add it to our list of parsed fields
                             var prop = fields[op.FlagIndex].Value;
@@ -139,7 +139,7 @@ namespace LinqToStdf.RecordConverting
                 if (fieldType == typeof(string))
                 {
                     // TODO: Accept string arrays
-                    throw new InvalidOperationException(Resources.NoStringArrays);
+                    //throw new InvalidOperationException(Resources.NoStringArrays);
                 }
                 if (fieldType == typeof(BitArray))
                 {
@@ -185,7 +185,7 @@ namespace LinqToStdf.RecordConverting
             {
                 var assignmentNodes = new List<CodeNode>();
                 //if this is optional, set us up to skip if the missing flag is set
-                if (pair.Key is FlaggedFieldLayoutAttribute optionalLayout)
+                if (pair.Key is IFlaggedFieldLayout optionalLayout)
                 {
                     assignmentNodes.Add(new SkipAssignmentIfFlagSetNode(optionalLayout.FlagIndex, optionalLayout.FlagMask));
                 }

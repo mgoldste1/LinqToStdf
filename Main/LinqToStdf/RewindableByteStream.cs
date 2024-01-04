@@ -30,7 +30,7 @@ namespace LinqToStdf {
             /// <summary>
             /// Tracks our current offset in the stream
             /// </summary>
-            int _Offset = 0;
+            long _Offset = 0;
 
             /// <summary>
             /// buffer used for reading a record header
@@ -189,9 +189,9 @@ namespace LinqToStdf {
             }
 
             /// <summary>
-            /// The current offset
+            /// The current offset (switched to long so it doesn't limit the size of stdf files being inputted)
             /// </summary>
-            public int Offset {
+            public long Offset {
                 get {
                     return _Offset;
                 }

@@ -15,6 +15,7 @@ using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Diagnostics.CodeAnalysis;
+using LinqToStdf.Records.V4;
 
 namespace LinqToStdf {
 
@@ -42,6 +43,7 @@ namespace LinqToStdf {
     /// </para>
     /// </remarks>
     public sealed partial class StdfFile : IRecordContext {
+        public string GUID { get; } = Guid.NewGuid().ToString();
         readonly IStdfStreamManager _StreamManager;
         RewindableByteStream? _Stream;
         readonly static internal RecordConverterFactory _V4ConverterFactory = new RecordConverterFactory();
@@ -61,6 +63,32 @@ namespace LinqToStdf {
         long? _ExpectedLength = null;
         public long? ExpectedLength { get { return _ExpectedLength; } }
 
+        private PmrLookup? _pmrLookup;
+
+        /// <summary>
+        /// This allows you to input an index number and get the pmr record out of it.  They are cached so its quick.
+        /// </summary>
+        public PmrLookup PmrLookup
+        {
+            get
+            {
+                return _pmrLookup ??= new PmrLookup(this);
+            }
+        }
+
+        private bool? _IsMultiDutFlag = null;
+        private object _lock = new object();
+        public bool IsMultiDut
+        {
+            get
+            {
+                if (_IsMultiDutFlag == null)
+                    lock (_lock)
+                        _IsMultiDutFlag ??= GetRecords().OfExactType<Pir>().Select(o => o.SiteNumber + "-" + o.HeadNumber).Distinct().Count() > 1;
+                return _IsMultiDutFlag!.Value;
+            }
+        }
+
         RecordFilter _RecordFilter;
         bool _FiltersLocked;
         readonly object _ISLock = new object();
@@ -72,15 +100,15 @@ namespace LinqToStdf {
             {
                 //TODO: get this locking pattern right
                 if (_IndexingStrategy == null)
-                {
                     lock (_ISLock)
-                    {
                         if (_IndexingStrategy == null)
                         {
-                            _IndexingStrategy = new SimpleIndexingStrategy();
+                            //Made the V4 strat the default unless its coming from a unit test (unit tests dont work on V4)
+                            if (Assembly.GetEntryAssembly()!.GetName().Name == "testhost")
+                                _IndexingStrategy ??= new SimpleIndexingStrategy();
+                            else
+                                _IndexingStrategy ??= new V4StructureIndexingStrategy();
                         }
-                    }
-                }
                 return _IndexingStrategy;
             }
             set
@@ -146,6 +174,18 @@ namespace LinqToStdf {
         /// <param name="debug">True if you want the converter factory
         /// to emit to a dynamic assembly suitable for debugging IL generation.</param>
         public StdfFile(string path, bool debug) : this(new DefaultFileStreamManager(path), debug) { }
+
+        /// <summary>
+        /// Constructs an StdfFile for the given path, suitable
+        /// for parsing STDF V4 files.
+        /// </summary>
+        /// <param name="path">The path the the STDF file</param>
+        /// <param name="strat">Strategy inputted. Set it to the V4StructureIndexingStrategy as it 
+        ///                     can provide a 350x performance bump in certain scenarios.</param>
+        public StdfFile(string path, IIndexingStrategy strat, bool debug = false) : this(new DefaultFileStreamManager(path), debug)
+        {
+            IndexingStrategy = strat;
+        }
 
         /// <summary>
         /// Constructs an StdfFile for the given path, suitable
@@ -565,7 +605,7 @@ namespace LinqToStdf {
                         int read = _Stream.Read(contents, contents.Length);
                         if (read < contents.Length) {
                             //rewind to the beginning of the record (read bytes + the header)
-                            _Stream.Rewind(_Stream.Offset - position);
+                            _Stream.Rewind((int)(_Stream.Offset - position));
                             yield return new CorruptDataRecord() {
                                 Offset = position,
                                 CorruptData = _Stream.DumpRemainingData(),
@@ -611,5 +651,12 @@ namespace LinqToStdf {
         }
 
         #endregion
+
+        public void ToSTDF(string outputLocation)
+        {
+            StdfFileWriter stdfFileWriter = new StdfFileWriter(outputLocation);
+            stdfFileWriter.WriteRecords(GetRecordsEnumerable());
+            stdfFileWriter.Dispose();
+        }
     }
 }

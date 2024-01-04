@@ -324,11 +324,11 @@ namespace LinqToStdf {
         /// <summary>
         ///   Looks up a localized string similar to String fields do not support array layout attributes..
         /// </summary>
-        internal static string NoStringArrays {
-            get {
-                return ResourceManager.GetString("NoStringArrays", resourceCulture);
-            }
-        }
+        //internal static string NoStringArrays {
+        //    get {
+        //        return ResourceManager.GetString("NoStringArrays", resourceCulture);
+        //    }
+        //}
         
         /// <summary>
         ///   Looks up a localized string similar to The offset is to large to be stored in an StdfRecord..

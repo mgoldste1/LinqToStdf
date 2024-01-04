@@ -48,7 +48,13 @@ namespace LinqToStdf {
         public override RecordType RecordType {
             get { return this._RecordType; }
         }
-
+        public string RecordTypeInfo
+        {
+            get
+            {
+                return _RecordType.ToString();
+            }
+        }
         private readonly Endian _Endian;
         /// <summary>
         /// The endian-ness of <see cref="Content"/>

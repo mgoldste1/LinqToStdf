@@ -48,7 +48,16 @@ namespace StdfFileTests
             return dateTime.AddTicks(-(dateTime.Ticks % TimeSpan.TicksPerSecond));
         }
     }
-
+    [TestClass]
+    public class OtherTests
+    {
+        [TestMethod]
+        public void ClassVariableMappingTest()
+        {
+            string nameInProject = ClassVariableMapping.get.Map("wir", "START_T").varName;
+            Assert.AreEqual(nameInProject.ToUpper(), "STARTTIME");
+        }
+    }
     [TestClass]
     public class RoundTrip
     {
@@ -97,6 +106,25 @@ namespace StdfFileTests
             TestRoundTripEquality(atr);
             atr.ModifiedTime = null;
             TestRoundTripEquality(atr);
+        }
+        [TestMethod]
+        public void TestVur()
+        {
+            var vur = new Vur();
+            TestRoundTripEquality(vur);
+
+            vur.UpdateVersionName = new string[] { "v1" };
+            TestRoundTripEquality(vur);
+        }
+
+        [TestMethod]
+        public void TestPsr()
+        {
+            var psr = new Psr();
+            TestRoundTripEquality(psr);
+
+            psr.PsrName = "meow";
+            TestRoundTripEquality(psr);
         }
 
         [TestMethod]
@@ -257,7 +285,8 @@ namespace StdfFileTests
         [TestMethod]
         public void TestPrr()
         {
-            var prr = new Prr
+            //var fdasf = Assembly.GetCallingAssembly().Location;
+           var prr = new Prr
             {
                 HeadNumber = 1,
                 SiteNumber = 1,
@@ -274,9 +303,11 @@ namespace StdfFileTests
             {
                 HeadNumber = 1,
                 SiteNumber = 1,
+                //OptionalFlags = 0xC8,
             };
             TestRoundTripEquality(tsr);
             tsr.TestSumOfSquares = 47.001f;
+            //tsr.OptionalFlags = 0xC8;
             TestRoundTripEquality(tsr);
         }
 

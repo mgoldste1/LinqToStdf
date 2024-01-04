@@ -249,6 +249,10 @@ namespace LinqToStdf.Indexing {
                 {
                     typeof(Extensions).GetMethodOrFail("GetChildRecords", typeof(Prr)),
                     typeof(V4StructureIndexingStrategy).GetMethodOrFail("GetChildRecords", typeof(Prr))
+                },
+                {
+                    typeof(Extensions).GetMethodOrFail("GetChildRecords_NoHeadSiteCheck", typeof(Pir)),
+                    typeof(V4StructureIndexingStrategy).GetMethodOrFail("GetChildRecords_NoHeadSiteCheck", typeof(Pir))
                 }
             };
 
@@ -301,7 +305,7 @@ namespace LinqToStdf.Indexing {
         /// Note that this optimization gives them to you in a slightly different order if using multi-site data
         /// </summary>
         public IEnumerable<Prr> OfExactTypePrr(IEnumerable<StdfRecord> records) {
-            records.Any(); //TODO: I don't remember what this is for :(
+            records.Any(); //TODO: I don't remember what this is for :(  - maybe just to make sure everything is loaded to ram first?
             return from e in _PartsMap.GetAllExtents()
                    from p in GetRecordsInExtentsReverse(e).Select(r => r as Prr).TakeWhile(r => r != null)
                    select p;
@@ -315,7 +319,7 @@ namespace LinqToStdf.Indexing {
         }
 
         /// <summary>
-        /// Leverages the parts extents to get all Prrs.
+        /// Leverages the parts extents to get all Pirs.
         /// Note that this optimization gives them to you in a slightly different order if using multi-site data
         /// </summary>
         public IEnumerable<Pir> OfExactTypePir(IEnumerable<StdfRecord> records)
@@ -472,6 +476,19 @@ namespace LinqToStdf.Indexing {
                 .SkipWhile(r => r.GetType() == typeof(Pir))
                 .OfType<IHeadSiteIndexable>()
                 .Where(r => r.HeadNumber == prr.HeadNumber && r.SiteNumber == prr.SiteNumber)
+                .TakeWhile(r => r.GetType() != typeof(Prr))
+                .Cast<StdfRecord>();
+        }
+
+
+        public IEnumerable<StdfRecord> GetChildRecords_NoHeadSiteCheck(Pir pir)
+        {
+            pir.StdfFile.GetRecordsEnumerable().Any();
+            if (pir.StdfFile.IsMultiDut)
+                throw new Exception("Don't use this for multidut files");
+            var partExtents = _PartsMap.GetExtents(pir);
+            if (partExtents is null) return Enumerable.Empty<StdfRecord>();
+            return GetRecordsInExtents(partExtents)
                 .TakeWhile(r => r.GetType() != typeof(Prr))
                 .Cast<StdfRecord>();
         }

@@ -2,10 +2,6 @@
 // This source is subject to the Microsoft Public License.
 // See http://www.microsoft.com/resources/sharedsource/licensingbasics/sharedsourcelicenses.mspx.
 // All other rights reserved.
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using System.Text;
 using LinqToStdf.Records.V4;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -28,7 +24,28 @@ namespace LinqToStdf {
                 if (r.GetType() == typeof(TRecord)) yield return (TRecord)r;
             }
         }
+        /// <summary>
+        /// Returns only records of an exact type
+        /// </summary>
+        /// <typeparam name="TRecord"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static IEnumerable<StdfRecord> OfExactType(this IEnumerable<StdfRecord> source, string className)
+        {
+            Type type = Type.GetType("LinqToStdf.Records.V4." + className, true, true) ?? throw new Exception("Failed to find type of " + "LinqToStdf.Records.V4." + className);
 
+            foreach (var r in source)
+            {
+                if (r.GetType() == type) yield return r;
+            }
+        }
+
+        /// <summary>
+        /// Returns only records of an exact type
+        /// </summary>
+        /// <typeparam name="TRecord"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
         public static IQueryable<TRecord> OfExactType<TRecord>(this IQueryable<StdfRecord> source) where TRecord : StdfRecord
         {
             return source.Provider.CreateQuery<TRecord>(
@@ -36,7 +53,19 @@ namespace LinqToStdf {
                     ((MethodInfo)(MethodBase.GetCurrentMethod() ?? throw new InvalidOperationException("Couldn't get current method."))).MakeGenericMethod(typeof(TRecord)),
                     source.Expression));
         }
-
+        /// <summary>
+        /// Returns only records of an exact type
+        /// </summary>
+        /// <typeparam name="TRecord"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public static IQueryable<StdfRecord> OfExactType<StdfRecord>(this IQueryable<StdfRecord> queryable, string className)
+        {
+            Type runtimeType = Type.GetType("LinqToStdf.Records.V4." + className, true, true) ?? throw new Exception("Failed to find type of " + "LinqToStdf.Records.V4." + className);
+            var method = typeof(Queryable).GetMethod(nameof(Queryable.OfType));
+            var generic = method.MakeGenericMethod(new[] { runtimeType });
+            return (IQueryable<StdfRecord>)generic.Invoke(null, new[] { queryable });
+        }
 
         #region extending IRecordContext
 
@@ -249,6 +278,18 @@ namespace LinqToStdf {
 
         #endregion
 
+        #region PMRLookups
+
+        public static List<Pmr>? GetAllPmrs(this Mpr mpr)
+        {
+            return mpr.StdfFile.PmrLookup.GetAll(mpr.PinIndexes);
+        }
+        //untested. i don't have FTRs with pmr info
+        //public static List<Pmr>? GetAllPmrs(this Ftr ftr)
+        //{
+        //    return ftr.StdfFile.PmrLookup.GetAll(ftr.ReturnIndexes);
+        //}
+        #endregion
         #region extending PIR/PRR
 
         public static Prr? GetMatchingPrr(this Pir pir) {
@@ -279,6 +320,19 @@ namespace LinqToStdf {
                 .Cast<StdfRecord>();
         }
 
+        /// <summary>
+        /// Gets the records associated with this pir but don't check head site combo. make sure it isnt multidut first...
+        /// </summary>
+        /// <param name="pir">The <see cref="Pir"/> representing the part</param>
+        /// <returns>The records associated with the part (between the <see cref="Pir"/>
+        /// and <see cref="Prr"/> </returns>
+        public static IEnumerable<StdfRecord> GetChildRecords_NoHeadSiteCheck(this Pir pir)
+        {
+            if (pir.StdfFile.IsMultiDut) throw new Exception("Multidut file. Don't use this.");
+            return pir.After()
+                .TakeWhile(r => r.GetType() != typeof(Prr))
+                .Cast<StdfRecord>();
+        }
         /// <summary>
         /// Gets the records associated with this prr
         /// </summary>
@@ -325,5 +379,81 @@ namespace LinqToStdf {
 
         public static MethodInfo GetMethodOrFail(this Type type, string methodName) => type.GetMethod(methodName) ?? throw new InvalidOperationException($"Could not get method {methodName} on type {type}");
         public static MethodInfo GetMethodOrFail(this Type type, string methodName, params Type[] parameters) => type.GetMethod(methodName, parameters) ?? throw new InvalidOperationException($"Could not get method {methodName} on type {type}");
+
+
+        public class DieGroup
+        {
+            public Pir? pir;
+            public Prr? prr;
+            public List<StdfRecord>? children;
+        }
+        public static List<DieGroup> GetDieGroupings(this StdfFile sFile, bool IncludeGenericRecordsIfSingleDut, bool removePirFromChildren = true)
+        {
+            if (sFile.GetRecords().OfExactType<Wir>().Count() > 1)
+                throw new Exception("This method only works if there is only 1 wafer in the file.");
+            List<DieGroup> data;
+            if (sFile.IsMultiDut || !IncludeGenericRecordsIfSingleDut)
+            {
+                data = sFile.GetRecords().OfExactType<Pir>()
+                                   .Select(o => new DieGroup
+                                   {
+                                       pir = o,
+                                       children = o.GetChildRecords().ToList(),
+                                       prr = o.GetMatchingPrr()
+                                   })
+                                   .ToList();
+            }
+            else
+            {
+                data = sFile.GetRecords().OfExactType<Pir>()
+                                         .Select(o => new DieGroup
+                                         {
+                                             pir = o,
+                                             children = o.GetChildRecords_NoHeadSiteCheck().ToList(),
+                                             prr = o.GetMatchingPrr()
+                                         })
+                                         .ToList();
+            }
+            //get children uses after and after includes the current record.
+            //since we have the pir in a separate variable we can remove the pir in the children
+            if (removePirFromChildren)
+                foreach (var grp in data!)
+                    if (grp.children != null && grp.children.Count > 0 && grp.children.First().GetType() == typeof(Pir))
+                        grp.children.RemoveAt(0);
+
+            //do a quick check to make sure no other pirs are in the grp. if there are then this stdf file is all sorts of wrong.
+            if (data.Any(grp => grp.children != null && grp.children.Any(c => c.GetType() == typeof(Pir))))
+                throw new Exception("Pirs of the same head/site found within another grouping. " +
+                                    "This means between 1 Pir and its associated Prr, we found another Pir with the same head/site.");
+
+            return data;
+        }
+        private static List<StdfRecord>? RecsOutsideDieArea;
+        private static string? SFileGUID = null;
+        public static List<StdfRecord> GetRecordsOutsideDieArea(this StdfFile sFile)
+        {
+            //this var needs to reset between stdf file objects.
+            if (SFileGUID != null && sFile.GUID != SFileGUID)
+                RecsOutsideDieArea = null;
+            if (RecsOutsideDieArea == null)
+            {
+                SFileGUID = sFile.GUID;
+                Pir? FirstPir = sFile.GetRecords().OfExactType<Pir>().FirstOrDefault();
+                Prr? LastPrr = sFile.GetRecords().OfExactType<Prr>().LastOrDefault();
+                if (FirstPir == null || LastPrr == null)
+                    throw new Exception("Stdf file is missing Pir and/or Prr records");
+
+                RecsOutsideDieArea = sFile.GetRecords().Where(o => o.Offset < FirstPir.Offset || o.Offset > LastPrr.Offset).ToList();
+            }
+            return RecsOutsideDieArea;
+        }
+
+        public static void ToSTDF(this IEnumerable<StdfRecord> source, string outputLocation)
+        {
+            StdfFileWriter stdfFileWriter = new(outputLocation);
+            stdfFileWriter.WriteRecords(source);
+            stdfFileWriter.Dispose();
+        }
+
     }
 }
