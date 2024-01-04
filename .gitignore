@@ -3,3 +3,5 @@
 ################################################################################
 
 .vs
+/Main/.cr/personal/FavoritesList
+/Main/StdfFileSummaryCreator/Properties/PublishProfiles
