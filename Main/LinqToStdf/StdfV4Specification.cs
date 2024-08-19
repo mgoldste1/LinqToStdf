@@ -20,7 +20,13 @@ namespace LinqToStdf {
             }
 			converterFactory.RegisterRecordType(new RecordType(0, 10), typeof(Far));
 			converterFactory.RegisterRecordType(new RecordType(0, 20), typeof(Atr));
-            converterFactory.RegisterRecordType(new RecordType(0, 30), typeof(Vur)); //V4-2007
+
+            //V4-2007
+            //Vur's require special processing because some sorting tools (V93K for example) write VURs in a way that does not meet the spec.
+            //Some tools follow the spec and contain a string where as others contain a string array.
+
+            converterFactory.RegisterRecordConverter(new RecordType(0, 30), Vur.ConvertToVur);
+            converterFactory.RegisterRecordUnconverter(typeof(Vur), Vur.ConvertFromVur);
             converterFactory.RegisterRecordType(new RecordType(1, 10), typeof(Mir));
 			converterFactory.RegisterRecordType(new RecordType(1, 20), typeof(Mrr));
 			converterFactory.RegisterRecordType(new RecordType(1, 30), typeof(Pcr));

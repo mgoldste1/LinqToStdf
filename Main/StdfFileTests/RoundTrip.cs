@@ -8,6 +8,7 @@ using LinqToStdf.Records.V4;
 using LinqToStdf.Records;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Security.Principal;
 
 namespace StdfFileTests
 {
@@ -106,15 +107,6 @@ namespace StdfFileTests
             TestRoundTripEquality(atr);
             atr.ModifiedTime = null;
             TestRoundTripEquality(atr);
-        }
-        [TestMethod]
-        public void TestVur()
-        {
-            var vur = new Vur();
-            TestRoundTripEquality(vur);
-
-            vur.UpdateVersionName = new string[] { "v1" };
-            TestRoundTripEquality(vur);
         }
 
         [TestMethod]
@@ -378,6 +370,22 @@ namespace StdfFileTests
         {
             var dtr = new Dtr();
             TestRoundTripEquality(dtr);
+        }
+
+        [TestMethod]
+        public void TestVur()
+        {
+            var vur = new Vur();
+            TestRoundTripEquality(vur);
+
+            vur.UpdateVersionName = new string[] { "v1" };
+            TestRoundTripEquality(vur);
+
+            vur.SetIsArrayFlag(true);
+            TestRoundTripEquality(vur);
+
+            vur.UpdateVersionName = new string[] { "v1", "v2" };
+            TestRoundTripEquality(vur);
         }
 
         public void TestRoundTripEquality<TRecord>(TRecord record, Endian endian = Endian.Big, IEnumerable<string> skipProps = null) where TRecord : StdfRecord

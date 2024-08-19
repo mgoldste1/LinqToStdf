@@ -480,6 +480,23 @@ namespace LinqToStdf
         }
 
         /// <summary>
+        /// Rewind the stream x bytes
+        /// </summary>
+        /// <param name="length"></param>
+        public void Rewind(int length)
+        {
+            _Stream.Seek(-1 * length, SeekOrigin.Current);
+        }
+
+        /// <summary>
+        /// Reset the stream to the beginning
+        /// </summary>
+        public void Reset()
+        {
+            _Stream.Seek(0, SeekOrigin.Begin);
+        }
+
+        /// <summary>
         /// Skips the indicated number of bytes
         /// </summary>
         public void Skip(long bytes)
