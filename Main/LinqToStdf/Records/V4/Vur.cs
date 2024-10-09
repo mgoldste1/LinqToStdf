@@ -61,7 +61,7 @@
                 try
                 {
                     byte potentialArraySize = reader.ReadByte();
-                    reader.Reset();
+                    //reader.Reset();
                     if (potentialArraySize > 0)
                     {
                         var strArray = reader.ReadStringArray(potentialArraySize);
